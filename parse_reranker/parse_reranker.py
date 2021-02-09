@@ -11,7 +11,6 @@ import math
 from tqdm import tqdm  # optional progress bar
 from torch.utils.data.sampler import SubsetRandomSampler
 
-# TODO: Set hyperparameters
 hyperparams = {
     "rnn_size": 30,
     "embedding_size": 50,
@@ -30,11 +29,9 @@ def train(model, train_loader, experiment, hyperparams):
     :param experiment: comet.ml experiment object
     :param hyperparams: hyperparameters dictionary
     """
-    # TODO: Define loss function and optimizer
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=train_loader.dataset.pad_idx)
     optimizer = torch.optim.Adam(model.parameters(), lr=hyperparams["learning_rate"])
 
-    # TODO: Write training loop
     model = model.train()
     with experiment.train():
         for batch in tqdm(train_loader):
@@ -43,14 +40,12 @@ def train(model, train_loader, experiment, hyperparams):
             optimizer.zero_grad()
 
             logits = model(inputs, batch["length"])
-            #print(logits.size())
-            #print(labels.size())
 
             logits = torch.reshape(logits, (hyperparams["batch_size"],
                                    model.vocab_size, hyperparams["rnn_size"]))
 
             loss = loss_fn(logits, labels)
-            #print(loss)
+
             loss.backward()
             optimizer.step()
 
@@ -63,12 +58,10 @@ def validate(model, validate_loader, experiment, hyperparams):
     :param experiment: comet.ml experiment object
     :param hyperparams: hyperparameters dictionary
     """
-    # TODO: Define loss function, total loss, and total word count
     loss_fn = nn.CrossEntropyLoss(ignore_index=train_loader.dataset.pad_idx)
     total_loss = 0
     word_count = 0
 
-    # TODO: Write validating loop
     model = model.eval()
     with experiment.validate():
         with torch.no_grad():
@@ -95,7 +88,6 @@ def test(model, test_dataset, experiment, hyperparams):
     :param experiment: comet.ml experiment object
     :param hyperparams: Hyperparameters dictionary
     """
-    # TODO: Write testing loops
     model = model.eval()
     with experiment.test():
 
@@ -106,7 +98,6 @@ def test(model, test_dataset, experiment, hyperparams):
             for s in tqdm(range(test_dataset.__len__())):
                 input_batch = test_dataset.__getitem__(s)
                 gold_constits = input_batch["gold"]
-                #print(input_batch["trees"])
                 num_correct = input_batch["trees"][:, 0]
                 total_constits = input_batch["trees"][:, 1]
                 lengths = input_batch["trees"][:, 2]
@@ -154,11 +145,8 @@ if __name__ == "__main__":
                         help="run testing loop")
     args = parser.parse_args()
 
-    # TODO: Make sure you modify the `.comet.config` file
     experiment = Experiment(log_code=False)
 
-    # TODO: Load dataset
-    # Hint: Use random_split to split dataset into train and validate datasets
     dataset = ParsingDataset("data/reranker_train.txt")
     hyperparams["rnn_size"] = dataset.avg_len
     experiment.log_parameters(hyperparams)

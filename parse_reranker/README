@@ -1,0 +1,39 @@
+parse_reranker
+
+Just to preface, I struggled mightily with this assignment! Hope to do better on
+the next one. I apologize for some of the code being messy & potentially difficult to
+"parse" as well. Train/Test times are all well about <5mins due to running these
+programs on a personal desktop with a GPU.
+
+The model completes training, but I was never able to achieve a loss on the
+training data lower than arnd 5. Here are some comet.ml experiments:
+
+GRU Training examples: (I varied the learning rate, num linear layers, batch_size, etc.)
+https://www.comet.ml/uk4xfarqr/parse-reranker/619424dd558e4b26864e67a9345570b7
+https://www.comet.ml/uk4xfarqr/parse-reranker/d9a7d6cbe0af427c8d14c7b0e19fbbf3
+https://www.comet.ml/uk4xfarqr/parse-reranker/20d44b00a6dc45ef9e713f172f8241ef
+
+LSTM Training examples:
+https://www.comet.ml/uk4xfarqr/parse-reranker/a8d1190918b54456ac51993724301546
+https://www.comet.ml/uk4xfarqr/parse-reranker/381694888a7e41adbb59574fdeabdf87
+https://www.comet.ml/uk4xfarqr/parse-reranker/b9a8376a421646ba865a954bd40b87e1
+
+
+Initially I was conflicted about whether to use whole length sequences as inputs
+to the RNN, because of the large window size. My first approach then was to partition
+an input sequence and use the final hidden state from a sequence partition as input
+to the subsequent ones (had rnn_size = 30 for these).
+
+When that didn't seem effective, I decided to change the window to the average length
+of a single parse in training, which turned out to be 61 for this data. Switching
+between GRU and LSTM did not change much either.
+
+I can only conclude there must have been some issue with the way I was preprocessing
+the data/creating inputs & labels. This definitely impacted the results I got from
+testing as well....perplexity was suspiciously low around 1, and F1 recall, and
+precision were terribly low as well. With more time, I would have tried training
+with more than 1 epoch, but my intuition tells me the issue is not that the model
+didn't train long enough
+
+Test Results:
+https://www.comet.ml/uk4xfarqr/parse-reranker/e75605ad5e934b8ea6fd30b0d96a5689
