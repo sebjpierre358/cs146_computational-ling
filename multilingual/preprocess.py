@@ -26,6 +26,15 @@ class TranslationDataset(Dataset):
         :param word2id: the word2id to append upon
         """
         # TODO: read the input file line by line and put the lines in a list.
+        if bpe:
+            bpe_vocab = learn_bpe(input_file, 100)
+
+        vanilla_vocab = {}
+
+        #TO BE TWEAKED FOR NON BPE VOCABULARY
+        for pair in lang_pairs:
+            lang_1, lang_2 = pair
+
 
         # TODO: split the whole file (including both training and validation
         # data) into words and create the corresponding vocab dictionary.
@@ -75,7 +84,52 @@ def learn_bpe(train_file, iterations):
     :return: vocabulary dictionary learned using BPE
     """
     # TODO: Please implement the BPE algorithm.
-    pass
+    vocab = get_frequency_vocab(train_file)
+    for i in range(iterations):
+        pairs = get_stats(vocab)
+        best = max(pairs, key=pairs.get)
+        vocab = merge_vocab(best, vocab)
+
+    return vocab
+
+
+
+def get_frequency_vocab(input_file):
+    vocab = {}
+    with open(input_file) as f:
+        raw = unicodedata.normalize("NFKC", f.read().strip()).split("\n")
+        #NEED TO CHECK IF THERE'S EXTRA WHITESPACE AFTER TAB SPLIT
+        lines = [line for line in raw]
+
+    for line in lines:
+        spaced_words = [" ".join(word) for word in line.split()]
+        for spaced_word in spaced_words:
+            if spaced_word in vocab:
+                vocab[spaced_word] += 1
+
+            else:
+                vocab[spaced_word] = 1
+
+    return vocab
+
+def get_stats(vocab):
+    pairs = defaultdict(int)
+    for word, freq in vocab.items():
+        symbols = word.split()
+        for i in range(len(symbols)-1):
+            pairs[symbols[i], symbols[i+1]] += freq
+    return pairs
+
+def merge_vocab(pair, v_in):
+    v_out = {}
+    bigram = re.escape(' '.join(pair))
+    p = re.compile(r'(?<!\S)' + bigram + r'(?!\S)')
+    for word in v_in:
+        w_out = p.sub(''.join(pair), word)
+        v_out[w_out] = v_in[word]
+
+    return v_out
+
 
 
 def get_transforms(vocab):
