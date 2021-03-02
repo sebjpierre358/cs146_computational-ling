@@ -25,16 +25,52 @@ class TranslationDataset(Dataset):
         :param target: the tag for target language
         :param word2id: the word2id to append upon
         """
+        self.enc_seq_len = enc_seq_len
+        self.dec_seq_len = dec_seq_len
+        self.bpe = bpe
         # TODO: read the input file line by line and put the lines in a list.
         if bpe:
-            bpe_vocab = learn_bpe(input_file, 100)
+            eng_lines = []
+            frn_lines = []
+            with open(input_file) as f:
+                raw = unicodedata.normalize("NFKC", f.read().strip()).split("\n")
+                for line in raw:
+                    assert len(line.split("\t")) == 2
+                    eng_phrase, frn_phrase = line.split("\t")
+                    eng_lines.append(eng_phrase.split())
+                    frn_lines.append(frn_phrase.split())
 
-        vanilla_vocab = {}
+        else:
+            eng_lines, frn_lines = read_from_corpus(input_file)
 
-        #TO BE TWEAKED FOR NON BPE VOCABULARY
-        for pair in lang_pairs:
-            lang_1, lang_2 = pair
+        assert len(eng_lines) == len(frn_lines)
+        self.length = len(eng_lines)
 
+        if word2id == None:
+            if bpe:
+                self.word2id = self.get_vocab2id(eng_lines + frn_lines)
+                self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.word2id)
+                self.vocab_size = len(self.word2id)
+                self.output_size = self.vocab_size #the bpe is joint
+
+            else:
+                self.word2id = word2id
+                self.eng_word2id = self.get_vocab2id(eng_lines)
+                self.frn_word2id = self.get_vocab2id(frn_lines)
+                self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.eng_word2id)
+                self.vocab_size = len(self.frn_word2id)
+                self.output_size = len(self.eng_word2id)
+
+        self.process_lines(frn_lines, eng_lines)
+        if self.bpe:
+            assert torch.equal(self.decoder_inputs[:, 0], torch.full([len(self)], self.word2id["START"]))
+            assert torch.equal(torch.eq(self.labels[:, 0], torch.full([len(self)], self.word2id["START"])),
+                torch.full([len(self)], False))
+
+        else:
+            assert torch.equal(self.decoder_inputs[:, 0], torch.full([len(self)], self.frn_word2id["START"]))
+            assert torch.equal(torch.eq(self.labels[:, 0], torch.full([len(self)], self.frn_word2id["START"])),
+                torch.full([len(self)], False))
 
         # TODO: split the whole file (including both training and validation
         # data) into words and create the corresponding vocab dictionary.
@@ -44,6 +80,67 @@ class TranslationDataset(Dataset):
 
         # Hint: remember to add start and pad to create inputs and labels
 
+    def get_vocab2id(self, parsed_lines):
+        vocab = set()
+        for line in parsed_lines:
+            vocab |= set(line)
+
+        vocab2id = {word : id for id,word in enumerate(["PAD", "START", "STOP"] + list(vocab))}
+
+        return vocab2id
+
+    def special_tkn_ids(self, lookup):
+        return lookup["PAD"], lookup["START"], lookup["STOP"]
+
+    def process_lines(self, encode_lines, decode_lines):
+        self.encoder_inputs = []
+        self.decoder_inputs = []
+        self.labels = []
+        self.encoder_lengths = {}
+        self.decoder_lengths = {}
+
+        print("processing data...")
+        for i in tqdm(range(len(encode_lines))):
+            if self.bpe:
+                enc = [self.word2id[e] for e in encode_lines[i]]
+                dec = [self.start_id] + [self.word2id[d] for d in decode_lines[i]]
+
+            else:
+                enc = [self.frn_word2id[e] for e in encode_lines[i]]
+                dec = [self.start_id] + [self.eng_word2id[d] for d in decode_lines[i]]
+
+            if len(enc) >= self.enc_seq_len:
+                enc = enc[:self.enc_seq_len-1]
+            enc.append(self.stop_id) #id is same in bpe and vanilla
+            self.encoder_lengths[i] = len(enc)
+
+            if len(dec) > self.dec_seq_len:
+                dec = dec[:self.dec_seq_len]
+            self.decoder_lengths[i] = len(dec)
+            targ = dec[1:] + [self.stop_id]
+
+            self.encoder_inputs.append(torch.tensor(enc))
+            self.decoder_inputs.append(torch.tensor(dec))
+            self.labels.append(torch.tensor(targ))
+
+        self.encoder_inputs = pad_sequence(self.encoder_inputs, True, self.pad_id)
+        self.decoder_inputs = pad_sequence(self.decoder_inputs, True, self.pad_id)
+        self.labels = pad_sequence(self.labels, True, self.pad_id)
+
+        if self.encoder_inputs.size()[1] != self.enc_seq_len:
+            self.encoder_inputs = torch.cat((self.encoder_inputs, torch.full([self.encoder_inputs.size()[0],
+                self.enc_seq_len - self.encoder_inputs.size()[1]], self.pad_id)), 1)
+
+        if self.decoder_inputs.size()[1] != self.dec_seq_len:
+            self.decoder_inputs = torch.cat((self.decoder_inputs, torch.full([self.decoder_inputs.size()[0],
+                self.dec_seq_len - self.decoder_inputs.size()[1]], self.pad_id)), 1)
+
+            self.labels = torch.cat((self.labels, torch.full([self.labels.size()[0],
+                self.dec_seq_len - self.labels.size()[1]], self.pad_id)), 1)
+
+
+
+
     def __len__(self):
         """
         len should return a the length of the dataset
@@ -51,7 +148,7 @@ class TranslationDataset(Dataset):
         :return: an integer length of the dataset
         """
         # TODO: Override method to return length of dataset
-        pass
+        return self.length
 
     def __getitem__(self, idx):
         """
@@ -63,8 +160,13 @@ class TranslationDataset(Dataset):
 
         :return: tuple or dictionary of the data
         """
-        # TODO: Override method to return the items in dataset
-        pass
+        item = {"enc_input" : self.encoder_inputs[idx],
+                "dec_input" : self.decoder_inputs[idx],
+                "labels" : self.labels[idx],
+                "enc_len" : torch.tensor(self.encoder_lengths[idx]),
+                "dec_len" : torch.tensor(self.decoder_lengths[idx])}
+
+        return item
 
 
 def learn_bpe(train_file, iterations):
@@ -93,12 +195,10 @@ def learn_bpe(train_file, iterations):
     return vocab
 
 
-
 def get_frequency_vocab(input_file):
     vocab = {}
     with open(input_file) as f:
         raw = unicodedata.normalize("NFKC", f.read().strip()).split("\n")
-        #NEED TO CHECK IF THERE'S EXTRA WHITESPACE AFTER TAB SPLIT
         lines = [line for line in raw]
 
     for line in lines:
@@ -112,6 +212,7 @@ def get_frequency_vocab(input_file):
 
     return vocab
 
+
 def get_stats(vocab):
     pairs = defaultdict(int)
     for word, freq in vocab.items():
@@ -119,6 +220,7 @@ def get_stats(vocab):
         for i in range(len(symbols)-1):
             pairs[symbols[i], symbols[i+1]] += freq
     return pairs
+
 
 def merge_vocab(pair, v_in):
     v_out = {}
@@ -233,6 +335,7 @@ def preprocess_vanilla(corpus_file, threshold=5):
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file', help='path to BPE input')
     parser.add_argument('iterations', help='number of iterations', type=int)
@@ -241,3 +344,10 @@ if __name__ == '__main__':
 
     vocab = learn_bpe(args.input_file, args.iterations)
     apply_bpe(args.input_file, args.output_file, vocab)
+
+    """
+    dataset = TranslationDataset('data/bpe-eng-fraS.txt', 25, 25)
+    print(dataset.__len__())
+    print()
+    print(dataset.__getitem__(dataset.__len__()-1)["dec_input"])
+    """

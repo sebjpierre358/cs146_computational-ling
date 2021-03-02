@@ -1,3 +1,3 @@
-**/data
+**parse_reranker/data
 *.pt
 **/__pycache__
