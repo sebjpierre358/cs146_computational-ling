@@ -3,14 +3,12 @@ import tensorflow as tf
 
 class RNN_Seq2Seq(tf.keras.Model):
 	def __init__(self, french_window_size, french_vocab_size, english_window_size, english_vocab_size, bpe):
-		###### DO NOT CHANGE ##############
 		super(RNN_Seq2Seq, self).__init__()
 		self.french_vocab_size = french_vocab_size # The size of the french vocab
 		self.english_vocab_size = english_vocab_size # The size of the english vocab
 
 		self.french_window_size = french_window_size # The french window size
 		self.english_window_size = english_window_size # The english window size
-		######^^^ DO NOT CHANGE ^^^##################
 
 		#Define batch size and optimizer/learning rate
 		self.batch_size = 100
@@ -18,7 +16,6 @@ class RNN_Seq2Seq(tf.keras.Model):
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=.02)
 		self.bpe = bpe
 
-		#Define embeddings, encoder, decoder, and feed forward layers
 		self.bpe_embed = tf.keras.layers.Embedding(self.french_vocab_size, self.embedding_size)
 
 		self.frn_embed = tf.keras.layers.Embedding(self.french_vocab_size, self.embedding_size)
@@ -43,16 +40,13 @@ class RNN_Seq2Seq(tf.keras.Model):
 		:return prbs: The 3d probabilities as a tensor, [batch_size x window_size x english_vocab_size]
 		"""
 		frn_embed = self.bpe_embed(encoder_input) if self.bpe else self.eng_embed(frn_embed)
-		#Pass your french sentence embeddings to your encoder
 		encode_out, encode_final_state = self.encode_W(frn_embed)
 		eng_embed = self.bpe_embed(decoder_input) if self.bpe else self.eng_embed(eng_embed)
-		#Pass your english sentence embeddings, and final state of your encoder, to your decoder
-		#input of the first cell here should be "STOP"
-		#print(encode_out.shape)
+		#input to the first cell here should be "STOP"
 		context_decode = tf.concat([encode_out, eng_embed], 2)
 		#decode_seq_out = self.decode_W(eng_embed, initial_state=encode_final_state)
 		decode_seq_out = self.decode_W(context_decode, initial_state=encode_final_state)
-		#Apply dense layer(s) to the decoder out to generate probabilities
+
 		d1_out = self.dense_1(decode_seq_out)
 		d2_out = self.dense_2(d1_out)
 		prbs = self.dense_3(d2_out)
@@ -62,8 +56,6 @@ class RNN_Seq2Seq(tf.keras.Model):
 
 	def accuracy_function(self, prbs, labels, mask):
 		"""
-		DO NOT CHANGE
-
 		Computes the batch accuracy
 
 		:param prbs:  float tensor, word prediction probabilities [batch_size x window_size x english_vocab_size]

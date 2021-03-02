@@ -28,7 +28,7 @@ class TranslationDataset(Dataset):
         self.enc_seq_len = enc_seq_len
         self.dec_seq_len = dec_seq_len
         self.bpe = bpe
-        # TODO: read the input file line by line and put the lines in a list.
+
         if bpe:
             eng_lines = []
             frn_lines = []
@@ -62,7 +62,7 @@ class TranslationDataset(Dataset):
                 self.output_size = len(self.eng_word2id)
 
         self.process_lines(frn_lines, eng_lines)
-        if self.bpe:
+        if self.bpe: #check labes all begin w/ START tag
             assert torch.equal(self.decoder_inputs[:, 0], torch.full([len(self)], self.word2id["START"]))
             assert torch.equal(torch.eq(self.labels[:, 0], torch.full([len(self)], self.word2id["START"])),
                 torch.full([len(self)], False))
@@ -71,14 +71,6 @@ class TranslationDataset(Dataset):
             assert torch.equal(self.decoder_inputs[:, 0], torch.full([len(self)], self.frn_word2id["START"]))
             assert torch.equal(torch.eq(self.labels[:, 0], torch.full([len(self)], self.frn_word2id["START"])),
                 torch.full([len(self)], False))
-
-        # TODO: split the whole file (including both training and validation
-        # data) into words and create the corresponding vocab dictionary.
-
-        # TODO: create inputs and labels for both training and validation data
-        #       and make sure you pad your inputs.
-
-        # Hint: remember to add start and pad to create inputs and labels
 
     def get_vocab2id(self, parsed_lines):
         vocab = set()
@@ -127,6 +119,7 @@ class TranslationDataset(Dataset):
         self.decoder_inputs = pad_sequence(self.decoder_inputs, True, self.pad_id)
         self.labels = pad_sequence(self.labels, True, self.pad_id)
 
+        #when all sequences < rnn size
         if self.encoder_inputs.size()[1] != self.enc_seq_len:
             self.encoder_inputs = torch.cat((self.encoder_inputs, torch.full([self.encoder_inputs.size()[0],
                 self.enc_seq_len - self.encoder_inputs.size()[1]], self.pad_id)), 1)
@@ -139,15 +132,12 @@ class TranslationDataset(Dataset):
                 self.dec_seq_len - self.labels.size()[1]], self.pad_id)), 1)
 
 
-
-
     def __len__(self):
         """
         len should return a the length of the dataset
 
         :return: an integer length of the dataset
         """
-        # TODO: Override method to return length of dataset
         return self.length
 
     def __getitem__(self, idx):
