@@ -15,7 +15,7 @@ from tqdm import tqdm  # optional progress bar
 hyperparams = {
     "rnn_size": 30,  # assuming encoder and decoder use the same rnn_size
     "embedding_size": 100,
-    "num_epochs": 6,
+    "num_epochs": 3,
     "batch_size": 64,
     "learning_rate": .002
 }
@@ -139,7 +139,6 @@ def test(model, test_loader, experiment, hyperparams, bpe, is_tf):
             accuracy = np.around(np.divide(accuracy_sum.numpy(), num_batches), decimals=3)
             perplexity = np.exp(total_avg_loss)
 
-        print("ok, we made it")
         print("perplexity:", perplexity)
         print("accuracy:", accuracy)
         experiment.log_metric("perplexity", perplexity)
@@ -178,16 +177,33 @@ if __name__ == "__main__":
     experiment = Experiment(log_code=False)
     experiment.log_parameters(hyperparams)
 
+    data_tags = list(zip(args.corpus_files, args.multilingual_tags))
+
     if args.bpe:
-        dataset = TranslationDataset(args.corpus_files[0], hyperparams["rnn_size"],
-                  hyperparams["rnn_size"])
+        if len(args.corpus_files) == 2:
+            # Hint: Make sure encoding and decoding lengths match for the datasets
+            dataset_1 = TranslationDataset(data_tags[0][0], hyperparams["rnn_size"],
+                hyperparams["rnn_size"], target=data_tags[0][1])
+            dataset_2 = TranslationDataset(data_tags[1][0], hyperparams["rnn_size"],
+                hyperparams["rnn_size"], target=data_tags[1][1], word2id=dataset_1.word2id)
+
+            dataset_1.word2id = dataset_2.word2id #could be sus....
+            dataset = ConcatDataset([dataset_1, dataset_2])
+        else:
+            dataset = TranslationDataset(args.corpus_files[0], hyperparams["rnn_size"],
+                      hyperparams["rnn_size"])
 
     else:
         dataset = TranslationDataset(args.corpus_files[0], hyperparams["rnn_size"],
                   hyperparams["rnn_size"], bpe=False)
 
-    vocab_size = dataset.vocab_size
-    output_size = dataset.output_size
+    if args.bpe:
+        vocab_size = dataset_2.vocab_size if len(args.corpus_files) == 2 else dataset.vocab_size
+        output_size = dataset_2.output_size if len(args.corpus_files) == 2 else dataset.output_size
+    else:
+        vocab_size = dataset.vocab_size
+        output_size = dataset.output_size
+
 
     train_sz = int(len(dataset) * .9)
     validate_sz = len(dataset) - train_sz
@@ -197,10 +213,6 @@ if __name__ == "__main__":
 
     test_loader = DataLoader(test_set, batch_size=hyperparams["batch_size"],
                               shuffle=True, pin_memory=True)
-
-    # Hint: Use ConcatDataset to concatenate datasets
-    # Hint: Make sure encoding and decoding lengths match for the datasets
-    data_tags = list(zip(args.corpus_files, args.multilingual_tags))
 
     model = Seq2Seq(
         vocab_size,
@@ -224,12 +236,12 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load('./model.pt'))
     if args.train:
         print("running training loop...")
-        train(model_tf, train_loader, experiment, hyperparams, args.bpe, True)
-        #train(model, train_loader, experiment, hyperparams, args.bpe, False)
+        #train(model_tf, train_loader, experiment, hyperparams, args.bpe, True)
+        train(model, train_loader, experiment, hyperparams, args.bpe, False)
     if args.test:
         print("running testing loop...")
-        test(model_tf, test_loader, experiment, hyperparams, args.bpe, True)
-        #test(model, test_loader, experiment, hyperparams, args.bpe, False)
+        #test(model_tf, test_loader, experiment, hyperparams, args.bpe, True)
+        test(model, test_loader, experiment, hyperparams, args.bpe, False)
     if args.save:
         print("saving model...")
         torch.save(model.state_dict(), './model.pt')

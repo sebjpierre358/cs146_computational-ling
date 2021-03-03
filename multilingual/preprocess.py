@@ -8,6 +8,7 @@ import re
 from collections import defaultdict
 from tqdm import tqdm  # optional progress bar
 
+special_tkns = ["PAD", "START", "STOP"]
 
 class TranslationDataset(Dataset):
     def __init__(self, input_file, enc_seq_len, dec_seq_len,
@@ -28,11 +29,16 @@ class TranslationDataset(Dataset):
         self.enc_seq_len = enc_seq_len
         self.dec_seq_len = dec_seq_len
         self.bpe = bpe
+        self.word2id = word2id
+
+        if target != None:
+            special_tkns.append(target)
+        self.target = target
 
         if bpe:
             eng_lines = []
             frn_lines = []
-            with open(input_file) as f:
+            with open(input_file, encoding="utf-8") as f:
                 raw = unicodedata.normalize("NFKC", f.read().strip()).split("\n")
                 for line in raw:
                     assert len(line.split("\t")) == 2
@@ -46,20 +52,18 @@ class TranslationDataset(Dataset):
         assert len(eng_lines) == len(frn_lines)
         self.length = len(eng_lines)
 
-        if word2id == None:
-            if bpe:
-                self.word2id = self.get_vocab2id(eng_lines + frn_lines)
-                self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.word2id)
-                self.vocab_size = len(self.word2id)
-                self.output_size = self.vocab_size #the bpe is joint
+        if bpe:
+            self.word2id = self.get_vocab2id(eng_lines + frn_lines)
+            self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.word2id)
+            self.vocab_size = len(self.word2id)
+            self.output_size = self.vocab_size #the bpe is joint
 
-            else:
-                self.word2id = word2id
-                self.eng_word2id = self.get_vocab2id(eng_lines)
-                self.frn_word2id = self.get_vocab2id(frn_lines)
-                self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.eng_word2id)
-                self.vocab_size = len(self.frn_word2id)
-                self.output_size = len(self.eng_word2id)
+        else:
+            self.eng_word2id = self.get_vocab2id(eng_lines)
+            self.frn_word2id = self.get_vocab2id(frn_lines)
+            self.pad_id, self.start_id, self.stop_id = self.special_tkn_ids(self.eng_word2id)
+            self.vocab_size = len(self.frn_word2id)
+            self.output_size = len(self.eng_word2id)
 
         self.process_lines(frn_lines, eng_lines)
         if self.bpe: #check labes all begin w/ START tag
@@ -77,9 +81,17 @@ class TranslationDataset(Dataset):
         for line in parsed_lines:
             vocab |= set(line)
 
-        vocab2id = {word : id for id,word in enumerate(["PAD", "START", "STOP"] + list(vocab))}
-
-        return vocab2id
+        if self.word2id == None:
+            vocab2id = {word : id for id,word in enumerate(special_tkns + list(vocab))}
+            return vocab2id
+        #could speed up mayb by doing set difference with given word2id....
+        else:
+            new_id = len(self.word2id)
+            for word in vocab:
+                if word not in self.word2id:
+                    self.word2id[word] = new_id
+                    new_id += 1
+            return self.word2id
 
     def special_tkn_ids(self, lookup):
         return lookup["PAD"], lookup["START"], lookup["STOP"]
@@ -91,15 +103,18 @@ class TranslationDataset(Dataset):
         self.encoder_lengths = {}
         self.decoder_lengths = {}
 
-        print("processing data...")
+        print("vectorizing data...")
         for i in tqdm(range(len(encode_lines))):
             if self.bpe:
                 enc = [self.word2id[e] for e in encode_lines[i]]
+                if self.target != None:
+                    enc = [self.word2id[self.target]] + enc
                 dec = [self.start_id] + [self.word2id[d] for d in decode_lines[i]]
 
             else:
                 enc = [self.frn_word2id[e] for e in encode_lines[i]]
                 dec = [self.start_id] + [self.eng_word2id[d] for d in decode_lines[i]]
+
 
             if len(enc) >= self.enc_seq_len:
                 enc = enc[:self.enc_seq_len-1]
@@ -250,7 +265,7 @@ def apply_bpe(train_file, bpe_file, vocab):
     :param bpe_file: file to save the Byte Pair Encoded version
     :param vocab: vocabulary dictionary learned from learn_bpe
     """
-    with open(train_file) as r, open(bpe_file, 'w') as w:
+    with open(train_file) as r, open(bpe_file, 'w', encoding="utf-8") as w:
         transforms = get_transforms(vocab)
         for line in r:
             line = unicodedata.normalize("NFKC", line)
@@ -325,7 +340,6 @@ def preprocess_vanilla(corpus_file, threshold=5):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file', help='path to BPE input')
     parser.add_argument('iterations', help='number of iterations', type=int)
@@ -337,7 +351,11 @@ if __name__ == '__main__':
 
     """
     dataset = TranslationDataset('data/bpe-eng-fraS.txt', 25, 25)
+    #dataset = TranslationDataset('data/joint-bpe-eng-deuS.txt', 25, 25, target='<2en>')
     print(dataset.__len__())
     print()
+    if dataset.target != None:
+        print(dataset.word2id[dataset.target])
     print(dataset.__getitem__(dataset.__len__()-1)["dec_input"])
+    print(dataset.__getitem__(dataset.__len__()-1)["enc_input"])
     """
