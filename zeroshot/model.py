@@ -22,8 +22,31 @@ class Seq2Seq(nn.Module):
         """
         super().__init__()
         # TODO: initialize the vocab_size, rnn_size, embedding_size
+        self.vocab_size = vocab_size
+        self.rnn_size = rnn_size
+        self.embedding_size = embedding_size
+        self.gru_layers=2
+        self.hidden_sz = 256
+        self.output_size = output_size
+        self.bpe = bpe
 
-        # TODO: initialize embeddings, LSTM, and linear layers
+        self.bpe_embed = nn.Embedding(self.vocab_size, self.embedding_size, 0)
+        #for vanilla vocab
+        self.enc_embed = nn.Embedding(self.vocab_size, self.embedding_size, 0)
+        self.dec_embed = nn.Embedding(self.output_size, self.embedding_size, 0)
+
+        self.encode_gru = nn.GRU(self.embedding_size, self.rnn_size, batch_first=True, bidirectional=True,
+                                 num_layers=self.gru_layers)
+        #input size would be just embedding size if not concatenating encoder output
+        self.decode_gru = nn.GRU(self.embedding_size+self.rnn_size*2, dec_seq_len, batch_first=True)
+
+        #weights each of the encoder hidden states to each word in decoder sequence
+        self.align = nn.Linear(2*self.rnn_size*self.gru_layers, self.rnn_size)
+
+        self.fc1 = nn.Linear(self.rnn_size, self.hidden_sz)
+        self.fc2 = nn.Linear(self.hidden_sz, self.output_size)
+        #self.fc3 = nn.Linear(self.hidden_sz_2, self.output_size)
+        #self.fc3_bpe = nn.Linear(self.hidden_sz_2, self.vocab_size)
 
     def forward(self, encoder_inputs, decoder_inputs, encoder_lengths,
                 decoder_lengths):
@@ -40,7 +63,38 @@ class Seq2Seq(nn.Module):
         :return: the logits, a tensor of shape
                  (batch_size, seq_len, vocab_size)
         """
-        # TODO: write forward propagation
+        if self.bpe:
+            encode = self.bpe_embed(encoder_inputs)
+            #encode = pack_padded_sequence(encode, encoder_lengths, batch_first=True, enforce_sorted=False)
+            decode = self.bpe_embed(decoder_inputs)
+            #decode = pack_padded_sequence(decode, decoder_lengths, batch_first=True, enforce_sorted=False)
 
-        # make sure you use pack_padded_sequence and pad_padded_sequence to
-        # reduce calculation
+        else:
+            encode = self.enc_embed(encoder_inputs)
+            #encode = pack_padded_sequence(encode, encoder_lengths, batch_first=True, enforce_sorted=False)
+            decode = self.dec_embed(decoder_inputs)
+            #decode = pack_padded_sequence(decode, decoder_lengths, batch_first=True, enforce_sorted=False)
+
+        #encode = self.drop(encode)
+        encode_out, enc_hidden = self.encode_gru(encode)
+
+        enc_hidden = torch.reshape(enc_hidden, (1, enc_hidden.size()[1], -1))
+        enc_hidden = torch.squeeze(enc_hidden)
+
+        #print(enc_hidden.size())
+        context = F.softmax(self.align(enc_hidden), dim=1)
+        #context = self.align(enc_hidden)
+        context = torch.unsqueeze(context, 0)
+        context_decode = torch.cat((encode_out, decode), 2)
+
+        decode_out, dec_hidden = self.decode_gru(context_decode, context)
+
+        decode_out = F.relu(self.fc1(decode_out))
+        #decode_out = F.relu(self.fc2(decode_out))
+        logits = self.fc2(decode_out)
+        #if self.bpe:
+        #    logits = self.fc3_bpe(decode_out)
+        #else:
+        #    logits = self.fc3(decode_out)
+
+        return logits

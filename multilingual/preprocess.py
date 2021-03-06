@@ -126,6 +126,8 @@ class TranslationDataset(Dataset):
             self.decoder_lengths[i] = len(dec)
             targ = dec[1:] + [self.stop_id]
 
+            #reversing order should bump accuracy a bit
+            #self.encoder_inputs.append(torch.flip(torch.tensor(enc), [0]))
             self.encoder_inputs.append(torch.tensor(enc))
             self.decoder_inputs.append(torch.tensor(dec))
             self.labels.append(torch.tensor(targ))
@@ -172,7 +174,6 @@ class TranslationDataset(Dataset):
                 "dec_len" : torch.tensor(self.decoder_lengths[idx])}
 
         return item
-
 
 def learn_bpe(train_file, iterations):
     """
