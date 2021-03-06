@@ -130,15 +130,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args_valid = True
 
-    # TODO: Make sure you modify the `.comet.config` file
     experiment = Experiment(log_code=False)
     experiment.log_parameters(hyperparams)
 
-
-    # TODO: Load dataset
-    # Hint: Use random_split to split dataset into train and validate datasets
-    # Hint: Use ConcatDataset to concatenate datasets
-    # Hint: Make sure encoding and decoding lengths match for the datasets
     data_tags = list(zip(args.corpus_files, args.multilingual_tags))
 
     if not args.zeroshot:

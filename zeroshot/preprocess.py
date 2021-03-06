@@ -27,7 +27,6 @@ class TranslationDataset(Dataset):
         :param word2id: the word2id to append upon
         :param flip: whether to flip the ordering of the sentences in each line
         """
-        # TODO: read the input file line by line and put the lines in a list.
         self.enc_seq_len = enc_seq_len
         self.dec_seq_len = dec_seq_len
         self.bpe = bpe
@@ -123,7 +122,7 @@ def process_lines(encode_lines, decode_lines, word2id, max_seq_len, target=None)
 
         if len(enc) >= max_seq_len:
             enc = enc[:max_seq_len-1]
-        enc.append(stop_id) #id is same in bpe and vanilla
+        enc.append(stop_id)
         encoder_lengths[i] = len(enc)
 
         if len(dec) > max_seq_len:
@@ -219,7 +218,6 @@ class ZeroshotDataset(Dataset):
         self.vocab_size = len(self.word2id)
         self.output_size = self.vocab_size
 
-        #self.process_lines(lang_1_lines, lang_2_lines)
 
         (self.enc_inputs,
         self.dec_inputs,
