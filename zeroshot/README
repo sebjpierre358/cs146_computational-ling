@@ -24,7 +24,7 @@ HYPERPARAM RATIONALE
 .003 learning rate
 - changed from .002 before. I experimented with a lot of values, but this seemed to
   work better. I do believe accuracy would still be fairly good if changed back to
-  .002 based on what I saw.  
+  .002 based on what I saw.
 
 Comet.ml urls below
 
@@ -64,7 +64,7 @@ is representing the "meaning" of a sentence similarly despite the linguistic
 difference. The embedding matrix being learned gives a relationship between every
 word in the bpe corpus, and so even without having seen the explicit language pair,
 values in the vector space of embeddings exist such that the model has some of
-the knowledge needed to "bridge the gap."  
+the knowledge needed to "bridge the gap."
 
 Zeroshot DEU->FR: 8 epochs 54.8% acc, 33 perplex
 https://www.comet.ml/uk4xfarqr/zeroshot/14e6409fb5ed452e984f9009b483a07e
@@ -72,7 +72,7 @@ https://www.comet.ml/uk4xfarqr/zeroshot/14e6409fb5ed452e984f9009b483a07e
 Zeroshot DEU->FR: 3 epochs 40.% acc, 49 perplex
 https://www.comet.ml/uk4xfarqr/zeroshot/5b62428552554e739f4887e813314615
 
-Zeroshot DEU->FR: 1 epoch 49.8% acc, 35.9 perplex (results for 1ep varied the most) 
+Zeroshot DEU->FR: 1 epoch 49.8% acc, 35.9 perplex (results for 1ep varied the most)
 https://www.comet.ml/uk4xfarqr/zeroshot/f639dc09468d4b99a944c5027e0e944e
 
 In the ZeroshotDataset code, it is assumed (from the given corpus files)
