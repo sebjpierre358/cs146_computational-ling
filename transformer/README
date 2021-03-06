@@ -1,0 +1,7 @@
+1. What are the benefits (and possibly disadvantages) of using a transformer network as opposed to an RNN network for language modeling?
+
+2. What are the purposes of each of the three vectors (query, key, value) in Scaled Dot-Product Attention? (Hint: Think why they are named that way. How are they used to produce an attention-based output? Alternatively, if you are unsure about the query/key/value naming scheme but are instead more familiar with the traditional notation for attention mechanisms, you can explain in terms of those as well.)
+
+3. What is the purpose of using multiple heads for attention, instead of just one? (Hint: the paper talks about this!)
+
+4. What is the purpose of positional encoding, and why would a sinusoid function work for this purpose? Are there other functions that may work for this purpose as well?
