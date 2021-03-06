@@ -187,7 +187,7 @@ if __name__ == "__main__":
             target_tag = data_tags[3][1]
             print("initiating zeroshot translation to {}".format(target_tag[2:-1]))
             trainset_1 = TranslationDataset(data_tags[0][0], hyperparams["rnn_size"],
-                hyperparams["rnn_size"], target=data_tags[0][1], flip=False)
+                hyperparams["rnn_size"], target=data_tags[0][1], flip=True)
             trainset_2 = TranslationDataset(data_tags[1][0], hyperparams["rnn_size"],
                 hyperparams["rnn_size"], target=data_tags[1][1], word2id=trainset_1.word2id)
 
