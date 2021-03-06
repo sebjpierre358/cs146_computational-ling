@@ -13,7 +13,7 @@ from tqdm import tqdm  # optional progress bar
 hyperparams = {
     "rnn_size": 40,  # assuming encoder and decoder use the same rnn_size
     "embedding_size": 128,
-    "num_epochs":8,
+    "num_epochs":1,
     "batch_size": 128,
     "learning_rate": .003
 }
