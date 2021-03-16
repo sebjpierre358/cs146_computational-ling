@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import math
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -169,10 +170,18 @@ def sinusoid_encoding(input):
     embed_sz = input.shape[2]
     window_sz = input.shape[1]
 
+    def encode_angle(pos, i):
+        return pos / (10000.0**(2.0*i/embed_sz))
+
     assert embed_sz % 2 == 0
-    enc = [[math.sin(pos / (10000**(2*i/embed_sz))) if i % 2 == 0 else
-            math.cos(pos / (10000**(2*i/embed_sz))) for i in range(embed_sz)] \
-            for pos in range(window_sz)]
+    #could do the sin/cos all in the list comprehension with a conditional...
+    #enc = [[(pos / (10000.0**(2*i/embed_sz))) for i in range(embed_sz)] for pos in range(window_sz)]
+    enc = np.fromfunction(encode_angle, (window_sz, embed_sz))
+    #enc = np.array(enc)
+    #takes all the even rows
+    enc[::2] = np.sin(enc[::2])
+    #all odds
+    enc[1::2] = np.cos(enc[1::2])
 
     #print(input.size())
     #print(torch.FloatTensor(enc).size())
