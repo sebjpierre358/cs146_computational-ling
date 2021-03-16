@@ -1,0 +1,23 @@
+transformer notes 2:
+
+the m in the attention equation is the window size
+
+
+
+we need a new positional matrix S now...
+and add that to QK which are logits?
+
+matrix of relative positions filled w/ negative values
+that go to zero
+> it's m x e
+
+to get Qe^t to be like S, need to "Skew"
+by padding, reshaping, and slicing???
+
+to get the S relative pos encoding:
+- get QK^t
+- do the pad and reshape and then a slice off the top col,
+  which should just be pad
+- should be abt 1 line of code each?
+- dont' actually ahve to do get S for the trans. to work tho, 
+  but its a cool upgrade

@@ -1,0 +1,29 @@
+Best Eng -> Frn:
+https://www.comet.ml/uk4xfarqr/zeroshot/330051b82d3d425a9f642e12f82567ee
+
+Best Eng -> Deu:
+https://www.comet.ml/uk4xfarqr/zeroshot/9a24f393d2dd4e30a83fbadd46ad622e
+
+Best Multiling:
+https://www.comet.ml/uk4xfarqr/zeroshot/5637b7ccb2f34b938cd25ff4fc02bf2d
+
+Best Zshot:
+https://www.comet.ml/uk4xfarqr/zeroshot/e0a8daa3a6494b91960a6204a5c547c2
+^ this is 3 epochs
+https://www.comet.ml/uk4xfarqr/zeroshot/5b62428552554e739f4887e813314615
+^ this is 1 epoch
+https://www.comet.ml/uk4xfarqr/zeroshot/3a221e993db44c13b4c6627adf2d34fa
+^ had 8 epochs on this
+
+
+
+8 epochs, Flipped Zshot:
+https://www.comet.ml/uk4xfarqr/zeroshot/14e6409fb5ed452e984f9009b483a07e
+8 epochs, Flip off
+https://www.comet.ml/uk4xfarqr/zeroshot/dcaefd61ce40429f80aecb690f871339
+
+1 epoch, Flip off:
+https://www.comet.ml/uk4xfarqr/zeroshot/1aca2f79b2474176ae881d8a864f96c3
+
+1 epoch, Flip on:
+https://www.comet.ml/uk4xfarqr/zeroshot/a76d20408f6a40279ed4ac93a62c0fb6
