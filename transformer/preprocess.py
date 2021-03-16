@@ -3,7 +3,7 @@ from torch.nn.utils.rnn import pad_sequence
 import torch
 import numpy as np
 import re
-from tqdm import tqdm  # optional progress bar
+from tqdm import tqdm 
 import random
 
 def load_dataset(fn_tr, fn_tst, window_size, batch_sz):
@@ -14,29 +14,11 @@ def load_dataset(fn_tr, fn_tst, window_size, batch_sz):
     :Comment: You don't have to shuffle the test dataset
     """
     train_set = ParsingDataset(fn_tr, window_size)
-    #dataset = ParsingDataset(fn_tr, window_size)
     test_set = ParsingDataset(fn_tst, window_size, train_set.word2id, False)
-    #test_set = ParsingDataset(fn_tst, window_size, dataset.word2id)
     train_set.update_word2id(test_set.word2id)
-    #mini_set = torch.utils.data.Subset(train_set, list(range(batch_sz)))
-    #dataset.update_word2id(train_set.word2id)
-
-    #train_sz = int(len(dataset) * .9)
-    #validate_sz = len(dataset) - train_sz
-    #train_set, test_set = random_split(dataset, [train_sz, validate_sz])
-    #print(len(train_set))
-    #print(train_set.word2id["STOP"])
-    #print(train_set.word2id["PAD"])
-    #print(train_set[5]["input"])
-    #print(train_set[5]["label"])
-    #print(test_set[5]["input"])
-    #print(test_set[5]["label"])
 
     train_loader = DataLoader(train_set, batch_size=batch_sz,
                               shuffle=True, pin_memory=True)
-
-    #train_loader = DataLoader(mini_set, batch_size=batch_sz,
-    #                          shuffle=True, pin_memory=True)
 
     test_loader = DataLoader(test_set, batch_size=batch_sz,
                               shuffle=False, pin_memory=True)
@@ -155,5 +137,3 @@ def process_lines(lines, word2id, window_size):
             window_size - labels.size()[1]], pad_id)), 1)
 
     return inputs, labels
-
-#load_dataset("data/penn-UNK-train.txt", "data/penn-UNK-test.txt", 10, 3)

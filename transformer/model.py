@@ -174,30 +174,11 @@ def sinusoid_encoding(input):
         return pos / (10000.0**(2.0*i/embed_sz))
 
     assert embed_sz % 2 == 0
-    #could do the sin/cos all in the list comprehension with a conditional...
-    #enc = [[(pos / (10000.0**(2*i/embed_sz))) for i in range(embed_sz)] for pos in range(window_sz)]
+    #should be able to do the sin/cos all in a list comprehension with a conditional...
     enc = np.fromfunction(encode_angle, (window_sz, embed_sz))
-    #enc = np.array(enc)
     #takes all the even rows
     enc[::2] = np.sin(enc[::2])
     #all odds
     enc[1::2] = np.cos(enc[1::2])
 
-    #print(input.size())
-    #print(torch.FloatTensor(enc).size())
-
     return input + torch.FloatTensor(enc).to(device)
-
-"""
-b_size = 5
-em_size = 6
-win_sz = 5
-heaz = 2
-lays = 1
-inp = torch.randint(high=199, size=(b_size, win_sz)).to(device)
-#transformer = Transformer(200, em_size, win_sz, 'sinusoid').to(device)
-#transformer = Transformer(200, em_size, win_sz, 'pos').to(device)
-transformer = Transformer(200, em_size, win_sz, 'sinusoid', layers=lays, heads=heaz).to(device)
-ouu = transformer(inp)
-print(ouu)
-"""

@@ -46,20 +46,16 @@ def train(model, train_loader, experiment):
                 loss = loss_fn(logits, labels)
                 if e == hyperparams["num_epochs"]-1:
                     total_loss += loss
-                #print(loss)
+
                 loss.backward()
                 optimizer.step()
 
         perplexity = torch.exp(total_loss / word_count).item()
 
-        # Log perplexity to Comet.ml using experiment.log_metric
         print("final epoch perplexity:", perplexity)
-        #print("accuracy:", accuracy)
         experiment.log_metric("perplexity", perplexity)
-        #experiment.log_metric("accuracy", accuracy)
 
 
-# Test the Model
 def test(model, test_loader, experiment):
     total_loss = 0
     word_count = 0
@@ -98,7 +94,6 @@ if __name__ == "__main__":
                         help="run testing loop")
     args = parser.parse_args()
 
-    # Data Loader (Input Pipeline)
     train_loader, test_loader, vocab_size = load_dataset(args.train_file, args.test_file, hyperparams["window_size"],
                                              hyperparams["batch_size"])
 
