@@ -1,7 +1,87 @@
 1. What are the benefits (and possibly disadvantages) of using a transformer network as opposed to an RNN network for language modeling?
 
+The word by word architecture of RNNs, while nicely suited to capturing the sequential nature of inputs, impacts training time by making
+parallelization difficult since a cell in an RNN needs information from previous hidden states to be calculated.
+
+Additionally, sequences of great length can become cumbersome for the RNN to "remember" information from much earlier in the sequence, and
+creating "long-range dependencies" to pull information from much earlier in a long sequence adds yet another variable to computation time.
+
+The transformer remedies both the parallelization issue since the attention function is not a sequential operation, and is applied in
+constant time, boosting training speed over the RNN. An interesting point to note is that because the reported complexity of
+a self-attention layer in a transformer is O(n^2 * d) vs the recurrent layer's O(n * d^2) (n=len_sequence, d=input dimensions), the
+self-attention layer is faster so long as n < 2. Although this is most commonly the case, this minor difference shows that there are potential
+situations where a transformer does not necessarily outclass the RNN.
+
+Another neat point about the sequential nature of the RNN is that it lends itself to learning the positional nature of the words in the sequence,
+whereas Transformers don't natively do this, and must (though admittedly not very troublesome) add a layer for positional encoding.
+
+On the other hand, another plus for the Transformer is that representing self-attention weights easily and quite intuitively reveals what the model
+is has learned which words and positions are influential on others in generating meaning. RNN cells are quite complex in this regard.
+
 2. What are the purposes of each of the three vectors (query, key, value) in Scaled Dot-Product Attention? (Hint: Think why they are named that way. How are they used to produce an attention-based output? Alternatively, if you are unsure about the query/key/value naming scheme but are instead more familiar with the traditional notation for attention mechanisms, you can explain in terms of those as well.)
+
+The goal with attention is to add more context to each word based on others in the input sequence. All the words in the sequence are passed through
+learned weights to generate queries, keys, and values to help generate this context. The Query simply represents which word is being referenced to gather
+contextual information for. With respect to queried word, all the other words in a sequence act as keys such that the combination of a
+query and key (the QK^T in the attention function) aligns with a specific value of a token. The value matrix represents how token/word can be ambiguous
+can and carry different meanings (consider pronouns like "it" or homographs like "bat" (the animal or the thing you swing)). So the combination of queried
+word to grab context for and another word as a "key" corresponds to a specific "value" of another word in the sequence.
 
 3. What is the purpose of using multiple heads for attention, instead of just one? (Hint: the paper talks about this!)
 
+Multiple heads for attention forces the model to focus in on different positions or ways of capturing meaning within the sequence.
+This overcomes the case where the learned attention weights end up heavily biased towards focusing in on a single aspect of a sequence
+instead of many others.
+
 4. What is the purpose of positional encoding, and why would a sinusoid function work for this purpose? Are there other functions that may work for this purpose as well?
+
+As previously mentioned, attention alone does not explicitly capture information carried with the position of each word in the sequence and what that means, unlike an RNN.
+The positional encodings are introduced to add this information to the word embeddings, giving a more complete representation of the word. The sinusoid representation
+is specifically suited to aiding with attention since any fixed distance from a certain position can be represented as a linear function of the given position.
+Since attention is calculating the relatedness of different words, being able to model the difference in positions as a linear function to learn through the sinusoidal representation
+meshes well with attention. The much simpler method of adding positional information is to learn a weight matrix which is added to the base embeddings each time before entering
+the transformer encoder.
+
+Comet Hashes & Perplexity:
+best run (learned pos encoding) - 106.8
+https://www.comet.ml/uk4xfarqr/transformer/6b9847ad905843fc8434e5b852643bee
+
+best sinusoidal encoding - 164.6
+https://www.comet.ml/uk4xfarqr/transformer/e2aee465528c4cb688976dfd96591831
+
+Hyperparam Rationale:
+
+batch size: 128
+- a light bump up over the default 100 in the original stencil. not much rationale
+  behind this besides larger batch size tends to increase performance & powers of
+  two are nice
+
+num epochs: 3
+- this was the initially given value, and the model performed well enough without
+  needing to increase this. experiments with only 1 epoch performed significantly
+  less well than 3
+
+learning rate: .001
+- unchanged from default
+
+window_size: 30
+- somewhat arbitrarily chosen based on a cursory look of the corpus file sentences.
+  not too long & not too short...worked well in the Seq2Seq model as well.
+
+embedding size: 100
+- unchanged from stencil
+
+encoding layers: 1
+- just 1 layer was enough to have the model perform well, and adding more layers,
+  though a capability of the model, seemed to negatively impact perplexity with the
+  all the other hyperparams unchanged
+
+attn heads: 5
+- multiple heads certainly performed better than 1. I tried 3, which was fine, but
+  5 was even better. The "magic number" for num_heads like the paper used is supposed
+  to be 8, but I felt no need to up the number with the perplexities I had with just 5
+
+positional encoding type
+- my best perplexities were with the regular learned positional encoding over the
+  sinusoidal. The sinusoidal certainly works better over no encoding at all, but interestingly
+  the learned positional worked consistently better.
