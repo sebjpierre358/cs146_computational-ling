@@ -1,0 +1,13 @@
+In your README, please note down:
+- A brief description talking about your rationale behind the hyperparameters during training
+
+- When training your own transformer, what is the difference between the preprocess you did on the previous assignment
+and the preprocess you are doing right now?
+
+- Give one positive and negative side about using the GPT-2 tokenizer for your own transformer
+
+- Compare the perplexities of both models. Which one is better? Why? Explain briefly.
+
+- Is this a fair comparison? Why?
+
+- What could be the advantages of using a pre-trained model? What is a possible use case? 
