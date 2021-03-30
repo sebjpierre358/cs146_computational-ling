@@ -1,0 +1,9 @@
+ In your README, please note down:
+
+- Your test perplexity and the corresponding comet_ml hash
+
+- A brief description talking about your rationale behind the hyperparameters during training
+
+- Can you describe your implementation for generating the response given an prompt? 
+
+- Can your think of other ways to improve the current chatbot given the persona dataset
