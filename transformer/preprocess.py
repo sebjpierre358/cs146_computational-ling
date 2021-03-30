@@ -3,14 +3,14 @@ from torch.nn.utils.rnn import pad_sequence
 import torch
 import numpy as np
 import re
-from tqdm import tqdm 
+from tqdm import tqdm
 import random
 
 def load_dataset(fn_tr, fn_tst, window_size, batch_sz):
     """
     :param fn_tr: filename for the training dataset
     :param fn_tst: filename for the testing dataset
-    :return: (torch.utils.data.DataLoader, torch.utils.data.DataLoader, vocab_size) for train and test
+    :return: (torch.utils.data.DataLoader, torch.utils.data.DataLoader) for train and test
     :Comment: You don't have to shuffle the test dataset
     """
     train_set = ParsingDataset(fn_tr, window_size)
@@ -23,7 +23,7 @@ def load_dataset(fn_tr, fn_tst, window_size, batch_sz):
     test_loader = DataLoader(test_set, batch_size=batch_sz,
                               shuffle=False, pin_memory=True)
 
-    return (train_loader, test_loader, test_set.vocab_size)
+    return (train_loader, test_loader)
 
 class ParsingDataset(Dataset):
     def __init__(self, input_file, window_size, word2id=None, shuffle=True):
