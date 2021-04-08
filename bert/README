@@ -1,0 +1,31 @@
+In your README, please note down:
+
+- A brief description talking about your rationale behind the 
+  hyperparameters used
+
+
+- A discussion on the embedding plots, for each word. Are there 
+  any discernible patterns? Does the distribution seem random?
+
+
+
+Further, please answer the following written questions:
+
+- What are the advantages (and possible disadvantages) of using BERT 
+  to create word representations, compared to other methods such as the 
+  embeddings matrix that we have used throughout the semester?
+
+
+- What is the purpose of masking in the way described in the paper 
+  (as compared to the masking that was done in the previous assignment?) 
+  Furthermore, why do we replace words with the mask token only 80% of
+  the time?
+
+
+- Suppose that you will adapt your model for the SWAG (Situations With 
+  Adversarial Generations) dataset, that is, deciding upon a multiple choice 
+  question given an input sentence (for more details, see Section 4.4.) List 
+  the steps on what modifications are necessary (in terms of the model 
+  architecture, data preprocessing, and the training process) to achieve this. 
+  (Hint: begin by considering Task #2 of the original BERT model, described 
+  in Section 3.3.2.)
