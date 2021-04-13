@@ -31,7 +31,14 @@ In your README, please note down:
         affect results greatly from my experiments
 
 COMET LINKS
-proj page:https://www.comet.ml/uk4xfarqr/bert/view/new
+proj page:
+https://www.comet.ml/uk4xfarqr/bert/view/new
+
+train/test:
+https://www.comet.ml/uk4xfarqr/bert/f7efed8c7dff4f98b1524444a4e7029f
+
+image analysis:
+https://www.comet.ml/uk4xfarqr/bert/3075bddffe594cdba7f95c0ca166fa28
 
 
 
@@ -69,10 +76,10 @@ proj page:https://www.comet.ml/uk4xfarqr/bert/view/new
 
   show (newly selected word):
     This plot also reflected the trend established in the previous plots where
-    the singluar and plural forms of the words had the largest clusters on the plot
+    the singular and plural forms of the words had the largest clusters on the plot
     situated opposite each other, with 2 opposing clusters for an the same additional tense --
     in this case: "showing". This could be interpreted as "showing" the verb and "showing"
-    the noun as in "The next showing for the movie is 9pm." Again, though the noun/verb form
+    the noun, as in, "The next showing for the movie is 9pm." Again, though the noun/verb form
     of the singular and plural is unclear, perhaps drawing a line (in the case of the
     "show" plot at least) horizontally such that the "showing" clusters are on opposite sides
     also partitions the "show"/"shows" clusters between the noun and verb.
