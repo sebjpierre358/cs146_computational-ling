@@ -1,0 +1,33 @@
+some tasks
+- named entity recognition 
+  > given entity and some text, what kind is it? (person, place, thing, etc.)
+- sentence 1 implies/contradicts/neutral with sentence 2
+  > given a paragraph as context
+
+- bert sits on top of a regular transformer....
+  
+- need bert to be bidirectional, but had a problem in 
+  regular transformer with needing to mask future words
+  > randomly pick 15% of words in text & mask only them out
+  > doesn't have to be 15% exactly, but should be small
+
+- we replace most of the 15% masked words in our window
+  with a special mask symbol.
+
+- then for each of those words, task is try to guess what
+  the word actually is
+- careful tho, in actual testing, don't have MASK in training
+  so there's gonna be a mismatch that'll screw up the model
+  in use
+
+- so maybe of the % being "masked", ACTUALLY mask like 80% of
+  those, leave 10%  as is, and the last 10% randomly replaced
+  with another word
+
+- perhaps we have to shift away from just replace with MASK
+  because we'd be teaching the model that words shouldn't 
+  pay attention to themselves (bc MASK doesn't tell us anything
+  useful in actual use) (HYPOTHESIS)
+
+- in the masked word task, they only predict what the masked
+  words were, and not the entire unmasked sequence

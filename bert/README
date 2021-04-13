@@ -1,31 +1,146 @@
 In your README, please note down:
 
-- A brief description talking about your rationale behind the 
+- A brief description talking about your rationale behind the
   hyperparameters used
 
+  Most of the hyperparameters were oriented towards training within the 20min
+  time limit while trying to get the best test accuracy/perplexity.
+  - 216 batch size
+    > I went with this size to help keep training time under 20mins since training
+      is quicker with larger batches
 
-- A discussion on the embedding plots, for each word. Are there 
+  - n=6 encoding layers
+     > there was a struggle to break past ~5% accuracy and upwards of 800 test
+       perplexity, so I sided with this higher number instead of the 2 layer default
+       to learn a better representation of the input for the MLM task. This had a
+        very noticeable affect on training time, but increasing the batch size
+        helped keep it ~20mins.
+
+   - window size 50
+      > this was about as much as my desktop gpu could handle (RTX 2060s) before
+        running out of memory on training, though it was a bump up from the window
+        size in previous assignments.
+
+    - 40 training epochs
+      > going in the range of around 50 seemed not to improve things much, and
+        pushed past the 20min training limit given my other parameters. The usual
+        amount of traning epochs <10 weren't enough to yield good perplexity/accuracy.
+
+    - learning rate .008
+      > I tried as between .0001 and .01 and values between .001 - .009 did not
+        affect results greatly from my experiments
+
+COMET LINKS
+proj page:https://www.comet.ml/uk4xfarqr/bert/view/new
+
+
+
+
+
+- A discussion on the embedding plots, for each word. Are there
   any discernible patterns? Does the distribution seem random?
+
+  figure:
+    There is a clear split between figure and figures. Interestingly there is a cluster
+    for figured on opposite sides of the plot, which may represent the model being
+    able to distinguish figured as "calculating" or thinking something through vs.
+    figured as something being displayed. The proximity to the "figure" cluster on
+    either end might then denote which refer to the noun vs the verb. The same would
+    apply to how the "figures" cluster might be partitioned, which is opposite the "figure"
+    cluster
+
+  state:
+    This is similar to the figure plot in that the base word and its plural form
+    are in distinct opposite clusters, with the -ed form split on opposite
+    sides of the graph. In the case of state, the curious split of "stated" might
+    reflect the adjective form of the word vs the past tense verb form. (eg: the
+    stated opinions were confusing vs. he stated the opinion firmly).
+
+  bank:
+    The bank plot has a very clear split between "bank" and "banks", yet no other
+    clear deliniation of the polysemous meaning of the word is present aside from
+    rather wide horizontal breadth of the points. "bank" could conceptually be split
+    between the financial institution vs "the bank of a river", though the only way
+    this might be gleaned from the plot is that perhaps those points further on the
+    right represent one of the meanings and vice. versa. Perhaps plotting the
+    embeddings in 3D could yield more visual information which reflects the polysemy
+    of the present, non-plural forms of the words which seem absent in this and the
+    prior 2 plots.
+
+  show (newly selected word):
+    This plot also reflected the trend established in the previous plots where
+    the singluar and plural forms of the words had the largest clusters on the plot
+    situated opposite each other, with 2 opposing clusters for an the same additional tense --
+    in this case: "showing". This could be interpreted as "showing" the verb and "showing"
+    the noun as in "The next showing for the movie is 9pm." Again, though the noun/verb form
+    of the singular and plural is unclear, perhaps drawing a line (in the case of the
+    "show" plot at least) horizontally such that the "showing" clusters are on opposite sides
+    also partitions the "show"/"shows" clusters between the noun and verb.
+
+    At this point it seems reasonable that the distribution of
+    the words is not random, though it is rather curious how the singular/plural split of
+    words is not always on the left or right side. "shows" and "states" had their clusters
+    on the left side of their plots, while the "figure"/"figures" split was more
+    north/south.
+
 
 
 
 Further, please answer the following written questions:
 
-- What are the advantages (and possible disadvantages) of using BERT 
-  to create word representations, compared to other methods such as the 
+- What are the advantages (and possible disadvantages) of using BERT
+  to create word representations, compared to other methods such as the
   embeddings matrix that we have used throughout the semester?
 
+  The main advantage of using BERT for word representations is it's bidirectionality.
+  That is, a BERT embedding for a single word is comprised of the words
+  both to the left of it and to the right of it, which was not possible with a
+  base Transformer trained on the task of predicting next words. It seems however
+  that the masked LM method used to train BERT takes many more epochs => training
+  time than is required with training a Transformer. In these assignments, the
+  Transformer yielded good results after training for a few epochs while BERT
+  required upwards of 50.
 
-- What is the purpose of masking in the way described in the paper 
-  (as compared to the masking that was done in the previous assignment?) 
+- What is the purpose of masking in the way described in the paper
+  (as compared to the masking that was done in the previous assignment?)
   Furthermore, why do we replace words with the mask token only 80% of
   the time?
 
+  With the Transformer based assignments, we mask words ahead/to the right of
+  a current word in self-attention because not doing so trivializes the task
+  of predicting the next word (the model will have already seen it!). The downside,
+  which BERT makes up for, is that words only consider themselves and everything
+  prior for attention, losing out on the contextual information from words later
+  in the sequence. By shifting the learning task to predicting the correct token
+  of a masked word, which can appear anywhere in a sequence,
+  BERT is free to learn word embeddings forwards and backwards without penalty.
+  Randomly masking a select number of tokens in a sequence is what allows for this.
+  However, a "masked" word is only replaced with "MASK" 80% of the time to account for
+  fine-tuning tasks in which the model will never encounter "MASK". An additional
+  benefit to the 80% method is that the model will be forced to learn representations
+  for every input token since it will be unknown whether a word is randomly replaced
+  and which it will have to predict.
 
-- Suppose that you will adapt your model for the SWAG (Situations With 
-  Adversarial Generations) dataset, that is, deciding upon a multiple choice 
-  question given an input sentence (for more details, see Section 4.4.) List 
-  the steps on what modifications are necessary (in terms of the model 
-  architecture, data preprocessing, and the training process) to achieve this. 
-  (Hint: begin by considering Task #2 of the original BERT model, described 
+
+
+- Suppose that you will adapt your model for the SWAG (Situations With
+  Adversarial Generations) dataset, that is, deciding upon a multiple choice
+  question given an input sentence (for more details, see Section 4.4.) List
+  the steps on what modifications are necessary (in terms of the model
+  architecture, data preprocessing, and the training process) to achieve this.
+  (Hint: begin by considering Task #2 of the original BERT model, described
   in Section 3.3.2.)
+
+  For SWAG, the architecture of the model will largely be unchanged. The embedding
+  matrix, and transformer encoder will still be present to learn the bidirectional
+  representation of the input. Because SWAG is a Next Sentence Prediction (NSP)
+  type task however, in fine tuning an additional vector will be learned such that
+  taking the dot product of that and the C vector of the input (the embedding of the CLS token)
+  will produce the score for each sentence paired with the multiple choice second sentence.
+
+  For preprocessing, unlike with the Masked LM task, a single input needs to be represented as
+  two sentences, separated by a [SEP] token, and leading with a [CLS] token. In pretraining,
+  the second sentence of an example will be the actual proceeding sentence from the input data
+  50% of the time, and another random sentence for the other 50%. The labels to be used for
+  cross entropy loss will be whether the classifier [CLS] of the sentence pair is IsNext or
+  NotNext. The C vector output by the model will be used to this end.
